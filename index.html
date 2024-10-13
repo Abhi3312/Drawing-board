@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/paper-full.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/hammerjs/2.0.8/hammer.min.js"></script>
+
+    <script type="text/javascript">
+        var paintcolor = 'white';
+        var strokeWidth = 3;
+        var isEraserActive = false; // Track eraser state
+
+        const changeColor = (color) => {
+            isEraserActive = false; // Disable eraser when color changes
+            paintcolor = color;
+        };
+
+        const enableEraser = () => {
+            isEraserActive = true; // Activate eraser
+        };
+
+        const increaseSize = () => {
+            strokeWidth++;
+            updatestrokeWidth();
+        };
+
+        const decreaseSize = () => {
+            if (strokeWidth <= 1) {
+                return;
+            }
+            strokeWidth--;
+            updatestrokeWidth();
+        };
+
+        const updatestrokeWidth = () => {
+            $("#strokeWidth").html(strokeWidth);
+        };
+
+        // when document is ready
+        $(document).ready(function () {
+         //   console.log("Document is ready!"); 
+            updatestrokeWidth();
+
+            var myElement = document.getElementById('draw');
+            var mc = new Hammer.Manager(myElement);
+            paper.setup(document.getElementById('draw'));
+
+            // handle touch input
+            mc.on("hammer.input", function (ev) {
+                if (ev.isFirst) {
+                    // if shift key is pressed then we will select the color as black so that will be our erase operation
+                    // and when double click is pressed then it will get erased
+
+                    console.log("start draw!!", ev.center.x, ev.center.y);
+                    if (isEraserActive || ev.srcEvent.shiftKey === true) {
+                        startDraw(ev, "black", strokeWidth * 4, "destination-out");
+                    } else {
+                        startDraw(ev);
+                    }
+                } else if (ev.isFinal) {
+                    endDraw(ev);
+                } else {
+                    middleDraw(ev);
+                }
+            });
+
+            // handle start draw
+            const startDraw = (ev, color = paintcolor, Width = strokeWidth, blendMode = "normal") => {
+                console.log("start draw!!", ev.center.x, ev.center.y); // Log the starting position
+                var path = new paper.Path({
+                    strokeColor: color,
+                    strokeWidth: Width,
+                    blendMode: blendMode
+                });
+            };
+
+            // handle middle draw
+            const middleDraw = (ev) => {
+                console.log("middle draw!!", ev.center.x, ev.center.y); // Log the middle position
+                paper.project._activeLayer.lastChild.add({ x: ev.center.x, y: ev.center.y });
+            };
+
+            // handle end draw
+            const endDraw = (ev) => {
+                console.log("end draw!!", ev.center.x, ev.center.y); // Log the ending position
+                paper.project._activeLayer.lastChild.simplify(20); // Simplify the drawing for better performance
+            };
+        });
+    </script>
+
+    <title>My Drawing Board</title>
+</head>
+
+<body>
+    <canvas id="draw"></canvas>
+    <div id="menu">
+        <button class="menuButton red" onclick="changeColor('red')"></button>
+        <button class="menuButton white" onclick="changeColor('white')"></button>
+        <button class="menuButton blue" onclick="changeColor('blue')"></button>
+        <button class="menuButton plusminus" onclick="increaseSize()">+</button>
+        <span class="menuButton" id="strokeWidth">-1</span>
+        <button class="menuButton plusminus" onclick="decreaseSize()">-</button>
+        <button class="menuButton erase" onclick="enableEraser()">Erase</button>
+    </div>
+</body>
+
+</html>
